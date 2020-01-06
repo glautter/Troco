@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Troco.App.Domain;
 using Troco.App.Service;
@@ -153,9 +154,14 @@ namespace Troco.Test
             var cedulas = new CemReais() * new DezReais();
             var caixa = new CaixaPagamento(valorProduto);
             var caixaPagto = caixa.Pagar(cedulas.ValorPago);
+            var valoresCedulas = new List<decimal>();
 
             var notasTroco = caixaPagto.SelecionarCedulasDoTroco;
-            var valoresCedulas = notasTroco.Select(x => x.GetType() == typeof(Cedula) ? ((Cedula)x).Valor : ((Moeda)x).Valor);
+            for (int index = 0; index < notasTroco.Count(); index++)
+                if (notasTroco[index] is Cedula)
+                    valoresCedulas.Add(((Cedula)notasTroco[index]).Valor);
+                else
+                    valoresCedulas.Add(((Moeda)notasTroco[index]).Valor);
 
             var vinteReais = new VinteReais();
             var cinquentaReais = new CinquentaReais();
@@ -183,35 +189,55 @@ namespace Troco.Test
         }
 
         [Fact]
-        public void DeveReceberTrocoDe11ReaisE55CentavosComUmaNotaDeDezReaisEUmaNotaDeUmRealEUmaMoedaDeVinteCincoCentavosEDuasMoedasDeDezCentavos()
+        public void DeveReceberTrocoDe11ReaisE55CentavosComUmaNotaDeDezReais_UmaNotaDeUmReal_UmaMoedaDeCinquentaCentavos_UmaMoedaDeCincoCentavos()
         {
             var valorProduto = 538.45M;
             var cedulas = new CinquentaReais() * 11;
             var caixa = new CaixaPagamento(valorProduto);
             var caixaPagto = caixa.Pagar(cedulas.ValorPago);
+            var valoresCedulas = new List<decimal>();
 
             var notasTroco = caixaPagto.SelecionarCedulasDoTroco;
-            var valoresCedulas = notasTroco.Select(x => x.GetType() == typeof(Cedula) ? ((Cedula)x).Valor : ((Moeda)x).Valor);
 
-            var vinteReais = new VinteReais();
-            var cinquentaReais = new CinquentaReais();
+            for (int index = 0; index < notasTroco.Count(); index++)
+                if (notasTroco[index] is Cedula)
+                    valoresCedulas.Add(((Cedula)notasTroco[index]).Valor);
+                else
+                    valoresCedulas.Add(((Moeda)notasTroco[index]).Valor);
 
-            Assert.Equal(3, valoresCedulas.Count());
+            var dezReais = new DezReais();
+            var umReal = new UmReal();
+            var cinquentaCentavos = new CinquentaCentavos();
+            var cincoCentavos = new CincoCentavos();
+
+            Assert.Equal(4, valoresCedulas.Count());
 
             foreach (var valor in valoresCedulas)
             {
                 switch (valor)
                 {
-                    case 50:
+                    case 10:
                         {
-                            Assert.Equal(cinquentaReais.Valor, valor);
-                            Assert.Equal("Cinquenta reais", cinquentaReais.ToString());
+                            Assert.Equal(dezReais.Valor, valor);
+                            Assert.Equal("Dez reais", dezReais.ToString());
                             break;
                         }
-                    case 20:
+                    case 1:
                         {
-                            Assert.Equal(vinteReais.Valor, valor);
-                            Assert.Equal("Vinte reais", vinteReais.ToString());
+                            Assert.Equal(umReal.Valor, valor);
+                            Assert.Equal("Um real", umReal.ToString());
+                            break;
+                        }
+                    case 0.50M:
+                        {
+                            Assert.Equal(cinquentaCentavos.Valor, valor);
+                            Assert.Equal("Cinquenta centavos", cinquentaCentavos.ToString());
+                            break;
+                        }
+                    case 0.05M:
+                        {
+                            Assert.Equal(cincoCentavos.Valor, valor);
+                            Assert.Equal("Cinco centavos", cincoCentavos.ToString());
                             break;
                         }
                 }
